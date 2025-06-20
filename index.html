@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Moedas Valorizadas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- DataTables -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+    }
+    .positivo { color: green; }
+    .negativo { color: red; }
+    .leve { color: blue; }
+  </style>
+</head>
+<body>
+  <h2>🟢 Moedas Valorizadas</h2>
+  <table id="tabela" class="display">
+    <thead>
+      <tr>
+        <th>Volume</th>
+        <th>Ranking</th>
+        <th>Nome</th>
+        <th>Símbolo</th>
+        <th>Preço (USD)</th>
+        <th>Link</th>
+        <th>% 24h</th>
+        <th>% 7d</th>
+        <th>% 30d</th>
+      </tr>
+    </thead>
+    <tbody id="corpo-tabela"></tbody>
+  </table>
+
+  <script>
+    const url = "https://script.google.com/macros/s/AKfycbwOdn9K8A5jQU_q61lwRiGdfoKJdPkxVu8o5BjfgN9J6NQvY0DQIGfAIm1xhstUUGRc/exec";
+
+    fetch(url)
+      .then(res => res.text())
+      .then(txt => {
+        console.log("Atualização executada:", txt);
+
+        // Depois da execução, pegamos os dados diretamente da planilha (caso esteja publicada)
+        const sheetCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1v..." // Coloque aqui o link direto do CSV da aba "Moedas Valorizadas"
+        // Ou melhor: integre com Tabletop.js ou publique como JSON no seu Apps Script
+
+        // Ou, se o HTML for usado apenas para ativar o Apps Script e mostrar um status, adicione um texto:
+        document.getElementById("corpo-tabela").innerHTML = `
+          <tr><td colspan="9">Dados atualizados com sucesso. Agora recarregue ou aponte para os dados visíveis.</td></tr>
+        `;
+      });
+
+    // Se você quiser carregar diretamente os dados da planilha, posso adaptar para usar CSV ou JSON. Basta compartilhar o link público da aba.
+  </script>
+</body>
+</html>

@@ -1,34 +1,10 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <title>Moedas Valorizadas</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- DataTables -->
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-    table {
-      width: 100%;
-    }
-    .positivo { color: green; }
-    .negativo { color: red; }
-    .leve { color: blue; }
-    td a {
-      text-decoration: none;
-    }
-  </style>
-</head>
 <body>
   <h2>🟢 Moedas Valorizadas</h2>
-  <table id="tabela" class="display">
+
+  <button onclick="atualizarPlanilha()">🔄 Atualizar Planilha</button>
+  <div id="atualizacao" style="margin-top: 10px;">Aguardando atualização...</div>
+
+  <table id="tabela" class="display nowrap" cellspacing="0">
     <thead>
       <tr>
         <th>Volume</th>
@@ -46,31 +22,60 @@
   </table>
 
   <script>
-    const urlJSON = "https://script.google.com/macros/s/AKfycbx3L6fo7DX1Ew-d30YouqRaOyfOZS2mT_rWont5SE_SgsSuL5j2aaL2kHdUU-QW3zo/exec";
+    const urlDados = "https://script.google.com/macros/s/AKfycbx3L6fo7DX1Ew-d30YouqRaOyfOZS2mT_rWont5SE_SgsSuL5j2aaL2kHdUU-QW3zo/exec";
+    const urlAtualizar = "https://script.google.com/macros/s/AKfycbwOdn9K8A5jQU_q61lwRiGdfoKJdPkxVu8o5BjfgN9J6NQvY0DQIGfAIm1xhstUUGRc/exec";
 
-    fetch(urlJSON)
-      .then(res => res.json())
-      .then(dados => {
-        const corpo = document.getElementById("corpo-tabela");
-
-        dados.forEach(item => {
-          const linha = document.createElement("tr");
-          linha.innerHTML = `
-            <td>${item.Volume}</td>
-            <td>${item.Ranking}</td>
-            <td>${item.Nome}</td>
-            <td>${item.Símbolo}</td>
-            <td>${Number(item["Preço (USD)"]).toFixed(4)}</td>
-            <td><a href="${item.Link}" target="_blank">🔗</a></td>
-            <td class="${definirClasse(item["% 24h"])}">${Number(item["% 24h"]).toFixed(2)}%</td>
-            <td>${Number(item["% 7d"]).toFixed(2)}%</td>
-            <td>${Number(item["% 30d"]).toFixed(2)}%</td>
-          `;
-          corpo.appendChild(linha);
+    function atualizarPlanilha() {
+      document.getElementById("atualizacao").textContent = "🔄 Atualizando planilha...";
+      fetch(urlAtualizar)
+        .then(res => res.text())
+        .then(() => {
+          document.getElementById("atualizacao").textContent = "✅ Planilha atualizada com sucesso. Recarregando dados...";
+          carregarDados(); // Atualiza a tabela com os dados novos
+        })
+        .catch(() => {
+          document.getElementById("atualizacao").textContent = "❌ Erro ao atualizar a planilha.";
         });
+    }
 
-        $('#tabela').DataTable();
-      });
+    function carregarDados() {
+      fetch(urlDados)
+        .then(res => res.json())
+        .then(dados => {
+          const corpo = document.getElementById("corpo-tabela");
+          corpo.innerHTML = ''; // Limpa a tabela
+
+          dados.forEach(item => {
+            const linha = document.createElement("tr");
+            linha.innerHTML = `
+              <td>${item.Volume}</td>
+              <td>${item.Ranking}</td>
+              <td>${item.Nome}</td>
+              <td>${item.Símbolo}</td>
+              <td>${Number(item["Preço (USD)"]).toFixed(4)}</td>
+              <td><a href="${item.Link}" target="_blank">🔗</a></td>
+              <td class="${definirClasse(item["% 24h"])}">${Number(item["% 24h"]).toFixed(2)}%</td>
+              <td>${Number(item["% 7d"]).toFixed(2)}%</td>
+              <td>${Number(item["% 30d"]).toFixed(2)}%</td>
+            `;
+            corpo.appendChild(linha);
+          });
+
+          const agora = new Date();
+          document.getElementById("atualizacao").textContent = `✅ Última atualização: ${agora.toLocaleString("pt-BR")}`;
+
+          // Atualiza a DataTable
+          if ($.fn.dataTable.isDataTable('#tabela')) {
+            $('#tabela').DataTable().destroy();
+          }
+          $('#tabela').DataTable({
+            paging: false,
+            dom: 'Bfrtip',
+            buttons: ['csvHtml5', 'pdfHtml5'],
+            scrollX: true
+          });
+        });
+    }
 
     function definirClasse(valor) {
       valor = Number(valor);
@@ -78,6 +83,8 @@
       if (valor >= 0 && valor < 1.5) return 'leve';
       return 'positivo';
     }
+
+    // Executa na primeira vez
+    carregarDados();
   </script>
 </body>
-</html>

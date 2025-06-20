@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <title>Moedas Valorizadas</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
+
   <!-- DataTables -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-  
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -21,6 +21,9 @@
     .positivo { color: green; }
     .negativo { color: red; }
     .leve { color: blue; }
+    td a {
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
@@ -43,24 +46,38 @@
   </table>
 
   <script>
-    const url = "https://script.google.com/macros/s/AKfycbx3L6fo7DX1Ew-d30YouqRaOyfOZS2mT_rWont5SE_SgsSuL5j2aaL2kHdUU-QW3zo/exec";
+    const urlJSON = "https://script.google.com/macros/s/AKfycbx3L6fo7DX1Ew-d30YouqRaOyfOZS2mT_rWont5SE_SgsSuL5j2aaL2kHdUU-QW3zo/exec";
 
-    fetch(url)
-      .then(res => res.text())
-      .then(txt => {
-        console.log("Atualização executada:", txt);
+    fetch(urlJSON)
+      .then(res => res.json())
+      .then(dados => {
+        const corpo = document.getElementById("corpo-tabela");
 
-        // Depois da execução, pegamos os dados diretamente da planilha (caso esteja publicada)
-        const sheetCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1v..." // Coloque aqui o link direto do CSV da aba "Moedas Valorizadas"
-        // Ou melhor: integre com Tabletop.js ou publique como JSON no seu Apps Script
+        dados.forEach(item => {
+          const linha = document.createElement("tr");
+          linha.innerHTML = `
+            <td>${item.Volume}</td>
+            <td>${item.Ranking}</td>
+            <td>${item.Nome}</td>
+            <td>${item.Símbolo}</td>
+            <td>${Number(item["Preço (USD)"]).toFixed(4)}</td>
+            <td><a href="${item.Link}" target="_blank">🔗</a></td>
+            <td class="${definirClasse(item["% 24h"])}">${Number(item["% 24h"]).toFixed(2)}%</td>
+            <td>${Number(item["% 7d"]).toFixed(2)}%</td>
+            <td>${Number(item["% 30d"]).toFixed(2)}%</td>
+          `;
+          corpo.appendChild(linha);
+        });
 
-        // Ou, se o HTML for usado apenas para ativar o Apps Script e mostrar um status, adicione um texto:
-        document.getElementById("corpo-tabela").innerHTML = `
-          <tr><td colspan="9">Dados atualizados com sucesso. Agora recarregue ou aponte para os dados visíveis.</td></tr>
-        `;
+        $('#tabela').DataTable();
       });
 
-    // Se você quiser carregar diretamente os dados da planilha, posso adaptar para usar CSV ou JSON. Basta compartilhar o link público da aba.
+    function definirClasse(valor) {
+      valor = Number(valor);
+      if (valor < 0) return 'negativo';
+      if (valor >= 0 && valor < 1.5) return 'leve';
+      return 'positivo';
+    }
   </script>
 </body>
 </html>

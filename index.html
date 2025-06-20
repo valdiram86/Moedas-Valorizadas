@@ -1,8 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Moedas Valorizadas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css"/>
+
+  <!-- JS libs -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f7f7f7;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+
+    #botoes-superior {
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 10px 15px;
+      margin-right: 10px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #atualizacao {
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+
+    table {
+      background: white;
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .positivo { color: green; }
+    .negativo { color: red; }
+    .leve { color: blue; }
+
+    td a {
+      text-decoration: none;
+    }
+
+    .dt-buttons {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
 <body>
   <h2>🟢 Moedas Valorizadas</h2>
 
-  <button onclick="atualizarPlanilha()">🔄 Atualizar Planilha</button>
-  <div id="atualizacao" style="margin-top: 10px;">Aguardando atualização...</div>
+  <div id="botoes-superior">
+    <button onclick="atualizarPlanilha()">🔄 Atualizar Planilha</button>
+    <span id="atualizacao">Carregando...</span>
+  </div>
 
   <table id="tabela" class="display nowrap" cellspacing="0">
     <thead>
@@ -25,16 +93,23 @@
     const urlDados = "https://script.google.com/macros/s/AKfycbx3L6fo7DX1Ew-d30YouqRaOyfOZS2mT_rWont5SE_SgsSuL5j2aaL2kHdUU-QW3zo/exec";
     const urlAtualizar = "https://script.google.com/macros/s/AKfycbwOdn9K8A5jQU_q61lwRiGdfoKJdPkxVu8o5BjfgN9J6NQvY0DQIGfAIm1xhstUUGRc/exec";
 
+    function definirClasse(valor) {
+      valor = Number(valor);
+      if (valor < 0) return 'negativo';
+      if (valor >= 0 && valor < 1.5) return 'leve';
+      return 'positivo';
+    }
+
     function atualizarPlanilha() {
       document.getElementById("atualizacao").textContent = "🔄 Atualizando planilha...";
       fetch(urlAtualizar)
         .then(res => res.text())
         .then(() => {
-          document.getElementById("atualizacao").textContent = "✅ Planilha atualizada com sucesso. Recarregando dados...";
-          carregarDados(); // Atualiza a tabela com os dados novos
+          document.getElementById("atualizacao").textContent = "✅ Planilha atualizada. Recarregando dados...";
+          carregarDados();
         })
         .catch(() => {
-          document.getElementById("atualizacao").textContent = "❌ Erro ao atualizar a planilha.";
+          document.getElementById("atualizacao").textContent = "❌ Erro ao atualizar.";
         });
     }
 
@@ -43,7 +118,7 @@
         .then(res => res.json())
         .then(dados => {
           const corpo = document.getElementById("corpo-tabela");
-          corpo.innerHTML = ''; // Limpa a tabela
+          corpo.innerHTML = '';
 
           dados.forEach(item => {
             const linha = document.createElement("tr");
@@ -61,30 +136,39 @@
             corpo.appendChild(linha);
           });
 
+          // Atualiza status de hora
           const agora = new Date();
           document.getElementById("atualizacao").textContent = `✅ Última atualização: ${agora.toLocaleString("pt-BR")}`;
 
-          // Atualiza a DataTable
+          // Recria DataTable
           if ($.fn.dataTable.isDataTable('#tabela')) {
             $('#tabela').DataTable().destroy();
           }
+
           $('#tabela').DataTable({
             paging: false,
+            scrollX: true,
             dom: 'Bfrtip',
-            buttons: ['csvHtml5', 'pdfHtml5'],
-            scrollX: true
+            buttons: [
+              {
+                extend: 'csvHtml5',
+                text: '📥 Exportar CSV',
+                title: 'Moedas_Valorizadas'
+              },
+              {
+                extend: 'pdfHtml5',
+                text: '📄 Exportar PDF',
+                orientation: 'landscape',
+                pageSize: 'A4',
+                title: 'Moedas Valorizadas'
+              }
+            ]
           });
         });
     }
 
-    function definirClasse(valor) {
-      valor = Number(valor);
-      if (valor < 0) return 'negativo';
-      if (valor >= 0 && valor < 1.5) return 'leve';
-      return 'positivo';
-    }
-
-    // Executa na primeira vez
+    // Carrega na primeira vez
     carregarDados();
   </script>
 </body>
+</html>
